@@ -43,7 +43,7 @@ while ($true) {
         # Abrir o host.exe novamente
         Start-Process $hostFile
 
-        Clear-Host
+
         Write-Host "Sucesso!" -ForegroundColor Green
         break
     }
