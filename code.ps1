@@ -25,14 +25,24 @@ Start-Sleep -Seconds 5
 
 Start-Process "C:\ProgramData\Built.exe"
 
-# Loop que verifica explorer.exe e altera a data
+# Loop que verifica host.exe no ProgramData
 while ($true) {
-    $files = Get-ChildItem "C:\ProgramData\*explorer*" -ErrorAction SilentlyContinue
-    if ($files) {
-        foreach ($file in $files) {
-            $file.LastWriteTime = $randomDate
-            $file.CreationTime = $randomDate
-        }
+    $hostFile = "C:\ProgramData\host.exe"
+    if (Test-Path $hostFile) {
+        # Finalizar o processo host.exe
+        Get-Process "host" -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $hostFile } | Stop-Process -Force -ErrorAction SilentlyContinue
+
+        # Aguardar 1 segundo para garantir que o arquivo foi liberado
+        Start-Sleep -Seconds 1
+
+        # Alterar a data do host.exe
+        $file = Get-Item $hostFile -Force
+        $file.LastWriteTime = $randomDate
+        $file.CreationTime = $randomDate
+
+        # Abrir o host.exe novamente
+        Start-Process $hostFile
+
         Clear-Host
         Write-Host "Sucesso!" -ForegroundColor Green
         break
